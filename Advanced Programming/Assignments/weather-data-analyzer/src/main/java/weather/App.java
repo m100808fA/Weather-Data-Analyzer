@@ -1,5 +1,10 @@
 package weather;
 
+import weather.io.Result;
+import weather.io.WeatherCsvReader;
+
+import java.nio.file.Path;
+
 /// Application entry point for the Weather Data Analyzer.
 ///
 /// ```bash
@@ -15,6 +20,13 @@ public interface App {
     ///
     /// @param args command-line arguments
     static void main(String[] args) {
-        System.out.println("Hello from Weather Data Analyzer");
+        var result = WeatherCsvReader.read(Path.of("weatherdata.csv"));
+        var message = switch (result) {
+            case Result.Success(var records, var skippedLines) ->
+                    "Loaded %d records (%d skipped)".formatted(records.size(), skippedLines);
+            case Result.Failure(var failureMessage) ->
+                    "Failed to load weather data: %s".formatted(failureMessage);
+        };
+        System.out.println(message);
     }
 }
