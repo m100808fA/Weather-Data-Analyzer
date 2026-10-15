@@ -1,5 +1,6 @@
 package weather.io;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import weather.model.WeatherRecord;
 
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 /// ```java
 /// // Executed by JUnit 5
 /// ```
-public interface WeatherCsvReaderTest {
+class WeatherCsvReaderTest {
 
     /// Verifies valid rows are loaded and malformed rows are counted as skipped.
     ///
@@ -26,7 +27,8 @@ public interface WeatherCsvReaderTest {
     /// ```
     ///
     /// @param tempDir temporary directory supplied by JUnit
-    static void readCountsSkippedLines(@TempDir Path tempDir) throws IOException {
+    @Test
+    void readCountsSkippedLines(@TempDir Path tempDir) throws IOException {
         var csv = """
                 Date,Temperature,Humidity,Precipitation
                 2023-08-01,32.5,65,0.0
@@ -46,5 +48,18 @@ public interface WeatherCsvReaderTest {
         var typedSuccess = (Result.Success<List<WeatherRecord>>) success;
         assertEquals(2, typedSuccess.value().size());
         assertEquals(2, typedSuccess.skippedLines());
+    }
+
+    /// Verifies that a missing file produces a failure instead of an exception.
+    ///
+    /// ```java
+    /// WeatherCsvReader.read(Path.of("does-not-exist.csv"));
+    /// ```
+    ///
+    /// @param tempDir temporary directory supplied by JUnit
+    @Test
+    void readMissingFileReturnsFailure(@TempDir Path tempDir) {
+        var result = WeatherCsvReader.read(tempDir.resolve("does-not-exist.csv"));
+        assertInstanceOf(Result.Failure.class, result);
     }
 }
