@@ -1,5 +1,6 @@
 package weather;
 
+import weather.analysis.Categorizer;
 import weather.analysis.WeatherAnalyzer;
 import weather.io.Result;
 import weather.io.WeatherCsvReader;
@@ -40,6 +41,8 @@ public interface App {
                 System.out.println("Rainy days: " + WeatherAnalyzer.countRainyDays(records));
                 System.out.println("By month: " + formatMonthlyAverages(WeatherAnalyzer.averageTemperatureByMonth(records)));
                 System.out.println("Hottest: " + formatHottestDay(WeatherAnalyzer.hottestDay(records)));
+
+                Categorizer.countByCategory(records).forEach((k, v) -> System.out.println(k + " = " + v));
             }
             case Result.Failure(var failureMessage) ->
                     System.out.println("Failed to load weather data: %s".formatted(failureMessage));
