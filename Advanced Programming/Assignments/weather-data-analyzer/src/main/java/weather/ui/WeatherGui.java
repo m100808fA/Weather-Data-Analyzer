@@ -42,7 +42,6 @@ import java.time.format.TextStyle;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -57,19 +56,46 @@ import java.util.stream.Collectors;
 /// ```
 public final class WeatherGui extends Application {
 
+    /// Full dataset loaded from the CSV file.
     private final ObservableList<WeatherRecord> masterData = FXCollections.observableArrayList();
+
+    /// Records for the currently selected month, shown in the table.
     private final ObservableList<WeatherRecord> monthData = FXCollections.observableArrayList();
 
+    /// Month selector.
     private ComboBox<Month> monthCombo;
+
+    /// Threshold slider, kept in sync with [#thresholdSpinner].
     private Slider thresholdSlider;
+
+    /// Threshold spinner, kept in sync with [#thresholdSlider].
     private Spinner<Double> thresholdSpinner;
+
+    /// Shows the average temperature of the selected month.
     private Label averageLabel;
+
+    /// Shows the rainy-day count and the days above the threshold.
     private Label rainyLabel;
+
+    /// Shows loading and status messages.
     private Label statusLabel;
+
+    /// Shows the per-category day counts.
     private Label categoryLabel;
+
+    /// Line chart of the daily temperature trend.
     private LineChart<Number, Number> lineChart;
+
+    /// Table of the selected month's daily records.
     private TableView<WeatherRecord> table;
 
+    /// Builds the scene graph, applies `style.css`, shows the window, and starts loading the CSV.
+    ///
+    /// ```java
+    /// Application.launch(WeatherGui.class, args); // JavaFX calls start(...)
+    /// ```
+    ///
+    /// @param stage the primary stage supplied by the JavaFX runtime
     @Override
     public void start(Stage stage) {
         monthCombo = new ComboBox<>();
@@ -176,6 +202,16 @@ public final class WeatherGui extends Application {
         loadCsvVirtual();
     }
 
+    /// Creates the daily-records table with Date, Temp, Humidity, Precip, and Category columns.
+    ///
+    /// Rows are colored through the CSS classes `cat-hot`, `cat-warm`, `cat-mild`, `cat-cold`,
+    /// and `cat-freezing`, selected with an enhanced `switch`.
+    ///
+    /// ```java
+    /// table = createTable();
+    /// ```
+    ///
+    /// @return a configured [TableView] bound to [#monthData]
     private TableView<WeatherRecord> createTable() {
         var tableView = new TableView<WeatherRecord>(monthData);
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -232,14 +268,24 @@ public final class WeatherGui extends Application {
         return tableView;
     }
 
+    /// Creates the daily temperature line chart.
+    ///
+    /// The x-axis runs from day `0` to `32` with a tick every `5` days and no minor ticks, so labels
+    /// are always whole numbers (`0, 5, 10, ... 30`).
+    ///
+    /// ```java
+    /// lineChart = createChart();
+    /// ```
+    ///
+    /// @return a configured, non-animated [LineChart]
     private LineChart<Number, Number> createChart() {
         var xAxis = new NumberAxis();
         xAxis.setLabel("Day");
         xAxis.setAutoRanging(false);
         xAxis.setLowerBound(0);
         xAxis.setUpperBound(32);
-        xAxis.setTickUnit(5);                 // labels: 0, 5, 10, 15, 20, 25, 30
-        xAxis.setMinorTickCount(0);           // no in-between ticks (the source of 2.5-style labels)
+        xAxis.setTickUnit(5);
+        xAxis.setMinorTickCount(0);
         xAxis.setMinorTickVisible(false);
         xAxis.setForceZeroInRange(false);
 
@@ -254,6 +300,14 @@ public final class WeatherGui extends Application {
         return chart;
     }
 
+    /// Loads `weatherdata.csv` on a virtual thread and updates the UI on the JavaFX thread.
+    ///
+    /// One virtual thread reads the file, a second waits for it, and the result is handled with a
+    /// pattern-matching `switch` over the sealed [Result] type.
+    ///
+    /// ```java
+    /// loadButton.setOnAction(_ -> loadCsvVirtual());
+    /// ```
     private void loadCsvVirtual() {
         statusLabel.setText("Loading weatherdata.csv on virtual thread...");
 
@@ -291,6 +345,13 @@ public final class WeatherGui extends Application {
         });
     }
 
+    /// Recomputes the table, chart, and statistics for the selected month and threshold.
+    ///
+    /// Does nothing until data has been loaded.
+    ///
+    /// ```java
+    /// monthCombo.setOnAction(_ -> updateView());
+    /// ```
     private void updateView() {
         if (masterData.isEmpty()) {
             return;
@@ -328,12 +389,29 @@ public final class WeatherGui extends Application {
                 filtered.size()));
     }
 
+    /// Formats an average temperature for display.
+    ///
+    /// ```java
+    /// formatAverage(OptionalDouble.of(34.016)); // "34.02 C"
+    /// formatAverage(OptionalDouble.empty());    // "N/A"
+    /// ```
+    ///
+    /// @param average optional average temperature
+    /// @return the value with two decimals and unit, or `N/A` when empty
     private static String formatAverage(OptionalDouble average) {
         return average.isPresent()
                 ? String.format(Locale.ROOT, "%.2f C", average.getAsDouble())
                 : "N/A";
     }
 
+    /// Rounds a value to one decimal place.
+    ///
+    /// ```java
+    /// round1(33.46); // 33.5
+    /// ```
+    ///
+    /// @param value the value to round
+    /// @return the value rounded to one decimal place
     private static double round1(double value) {
         return Math.round(value * 10.0) / 10.0;
     }
