@@ -255,4 +255,4 @@ All application logic remains free of classes.
 
 - **Author:** *MUHAMMAD FASEEH* (https://github.com/m100808fA/Weather-Data-Analyzer.git)
 - **Course / Assignment:** *Modern Java Weather Data Analyzer*
-- **License:** MIT — see `LICENSE` (add one via GitHub → *Add file → Create new file → LICENSE*)
+- **License:** MIT — see `LICENSE` 
